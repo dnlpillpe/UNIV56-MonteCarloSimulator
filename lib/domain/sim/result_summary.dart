@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import '../../core/math/stats.dart';
+import '../../core/math/stats.dart' as stats show mean;
 import 'model_spec.dart';
 import 'simulation_engine.dart';
 
@@ -62,9 +63,9 @@ class ResultSummary {
     final k = math.max(1, (sorted.length * 0.05).floor());
     double tail;
     if (spec.side == ThresholdSide.below) {
-      tail = mean(sorted.sublist(0, k));
+      tail = stats.mean(sorted.sublist(0, k));
     } else {
-      tail = mean(sorted.sublist(sorted.length - k));
+      tail = stats.mean(sorted.sublist(sorted.length - k));
     }
     // Sensibilidad: solo entradas que varían.
     final sens = <Sensitivity>[];

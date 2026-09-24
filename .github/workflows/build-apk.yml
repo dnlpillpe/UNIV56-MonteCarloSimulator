@@ -1,0 +1,65 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+  workflow_dispatch:
+
+env:
+  FLUTTER_VERSION: "3.35.4"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Compilar APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - name: Generar plataformas
+        run: flutter create --platforms=android,ios --org com.educationalfactory --project-name monte_carlo_simulator .
+      - name: Ajustes posteriores y firma (si hay secretos)
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: python3 tool/postcreate.py
+      - run: flutter pub get
+      - name: Icono de la app
+        run: dart run flutter_launcher_icons
+      - name: APK universal
+        run: flutter build apk --release
+      - name: APK por arquitectura
+        run: flutter build apk --release --split-per-abi
+      - name: Renombrar
+        run: |
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/app-release.apk dist/monte-carlo-simulator-universal.apk
+          for f in build/app/outputs/flutter-apk/app-*-release.apk; do
+            abi=$(basename "$f" | sed -E 's/app-(.*)-release.apk/\1/')
+            cp "$f" "dist/monte-carlo-simulator-$abi.apk"
+          done
+          ls -la dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: monte-carlo-simulator-apk
+          path: dist/*.apk
+          retention-days: 30
+      - name: Publicar release (solo etiquetas v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.apk
+          generate_release_notes: true

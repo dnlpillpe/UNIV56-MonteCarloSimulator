@@ -1,0 +1,32 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+
+# Plataformas generadas en CI (ver tool/postcreate.py)
+/android/
+/ios/
+/linux/
+/macos/
+/windows/
+/web/
+.metadata
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Firma
+*.jks
+*.keystore
+key.properties
+
+# Python
+__pycache__/
+*.pyc
